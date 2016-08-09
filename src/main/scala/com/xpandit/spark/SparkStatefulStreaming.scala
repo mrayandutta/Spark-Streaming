@@ -103,5 +103,6 @@ object SparkStatefulStreaming {
     diff <= maxTimeDiffSeconds * 1000
   }
 
+  
 
 }
