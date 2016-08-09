@@ -5,6 +5,8 @@ import java.sql.{Date, Timestamp}
 import org.apache.log4j.Logger
 import org.apache.spark._
 import org.apache.spark.streaming._
+import _root_.kafka.serializer.StringDecoder
+import org.apache.spark.streaming.kafka.KafkaUtils
 
 import scala.collection.mutable.Set
 
@@ -13,36 +15,25 @@ object SparkStatefulStreaming {
 
   val logger = Logger.getLogger(SparkStatefulStreaming.getClass)
 
-  val EventsDirectory = "src/main/resources/"
-  val AlertOutputPath = "src/main/resources/output/alerts.txt"
-  val CheckpointDirectory = "/tmp/spark/checkpoint"
-
-  @SerialVersionUID(100L)
-  class TemperatureStateEvent(val rackId: Int, val time: Long, val temp: Double) extends Serializable {
-
-    val HighTemperature = 40.0
-    val RelevantTime = 120        //time window in seconds in which events will be considered from
-
-    def highTemperature() = temp > HighTemperature
-
-    //is event from no more than 2min ago
-    def isTimeRelevant() = timeNoMoreThanXseconds(time * 1000, RelevantTime)
-
-    override def toString(): String = "[ " + rackId + " , " + new Timestamp(time * 1000) + " , " + temp + " ]\n"
-
-  }
-
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("SparkStatefulStreaming")
     val ssc = new StreamingContext(conf, Seconds(1))
-    ssc.checkpoint(CheckpointDirectory) // set checkpoint directory
+    ssc.checkpoint("/tmp/spark/checkpoint") // set checkpoint directory
 
-    val lines = ssc.textFileStream(EventsDirectory)
-    val nonFilteredEvents = lines.map(createEvent)
+
+    //Retrieving from Kafka
+    val kafkaParams: Map[String, String] = Map("metadata.broker.list" -> "localhost:9092")
+    val topicsSet = scala.collection.immutable.Set("events")
+
+    val kafkaStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
+
+    val nonFilteredEvents = kafkaStream.map( (tuple) => createEvent(tuple._2) )
+
     val events = nonFilteredEvents.filter((pair) => {
       pair._2.highTemperature() && pair._2.isTimeRelevant()
     })
+
 
     //mapWithState function
     val updateState = (batchTime: Time, key: Int, value: Option[TemperatureStateEvent], state: State[(Option[Long], Set[TemperatureStateEvent])]) => {
@@ -68,7 +59,7 @@ object SparkStatefulStreaming {
         updatedSet.foreach(sb.append(_))
         sb.append("----------------------------------------------------------------\n\n")
 
-        scala.tools.nsc.io.File(AlertOutputPath).appendAll(sb.toString())
+        //TODO
       }
 
       state.update((lastAlertTime, updatedSet))
@@ -87,6 +78,21 @@ object SparkStatefulStreaming {
   }
 
 
+  @SerialVersionUID(100L)
+  class TemperatureStateEvent(val rackId: Int, val time: Long, val temp: Double) extends Serializable {
+
+    val HighTemperature = 40.0
+    val RelevantTime = 120        //time window in seconds in which events will be considered from
+
+    def highTemperature() = temp > HighTemperature
+
+    //is event from no more than 2min ago
+    def isTimeRelevant() = timeNoMoreThanXseconds(time * 1000, RelevantTime)
+
+    override def toString(): String = "[ " + rackId + " , " + new Timestamp(time * 1000) + " , " + temp + " ]\n"
+
+  }
+
   def createEvent(strEvent: String): (Int, TemperatureStateEvent) = {
 
     val eventData = strEvent.split('|')
@@ -103,6 +109,5 @@ object SparkStatefulStreaming {
     diff <= maxTimeDiffSeconds * 1000
   }
 
-  
 
 }
