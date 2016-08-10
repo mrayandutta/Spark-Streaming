@@ -87,9 +87,9 @@ object SparkStatefulStreaming {
     def highTemperature() = temp > HighTemperature
 
     //is event from no more than 2min ago
-    def isTimeRelevant() = timeNoMoreThanXseconds(time * 1000, RelevantTime)
+    def isTimeRelevant() = timeNoMoreThanXseconds(time, RelevantTime)
 
-    override def toString(): String = "[ " + rackId + " , " + new Timestamp(time * 1000) + " , " + temp + " ]\n"
+    override def toString(): String = "[ " + rackId + " , " + new Timestamp(time) + " , " + temp + " ]\n"
 
   }
 
@@ -108,6 +108,5 @@ object SparkStatefulStreaming {
     val diff = (System.currentTimeMillis() - timestamp)
     diff <= maxTimeDiffSeconds * 1000
   }
-
 
 }

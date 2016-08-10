@@ -60,6 +60,7 @@ public class KafkaProducerService {
             public void onCompletion(RecordMetadata recordMetadata, Exception e) {
 
             }
+
         });
 
         //boolean success = false;

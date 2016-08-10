@@ -18,23 +18,37 @@ public class KafkaProducer {
 
     public static void main(String[] args){
 
-        File eventsFile = new File("src/main/resources/events");
+        File eventsFile = new File("src/main/resources/events.txt");
+
+        KafkaProducerService kafkaProducerService = new KafkaProducerService(ZOOKEEPER, BROKERS, TOPIC);
 
         try {
 
             List<String> eventLines = Files.readAllLines(Paths.get(eventsFile.getPath()));
 
-            KafkaProducerService kafkaProducerService = new KafkaProducerService(ZOOKEEPER, BROKERS, TOPIC);
+            int currentEvent = 0;
+            int nextStop = 10000;
 
-            for (String event: eventLines){
-                kafkaProducerService.sendMessage(event);
+            while(currentEvent < eventLines.size()) {
+
+                while(currentEvent < nextStop) {
+                    String msg = System.currentTimeMillis() + "|" + eventLines.get(currentEvent);
+                    kafkaProducerService.sendMessage(msg);
+                    currentEvent++;
+                }
+
+                System.out.println("Injected 10000 events to Kafka");
+
+                nextStop += 10000;
+
+                Thread.sleep(5000);
             }
 
-            kafkaProducerService.destroy();
-            System.out.println("Added " + eventLines.size() + "events to Kafka");
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+        }
+        finally {
+            kafkaProducerService.destroy();
         }
 
     }
