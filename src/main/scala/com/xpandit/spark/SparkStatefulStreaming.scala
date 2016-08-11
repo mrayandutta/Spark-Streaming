@@ -10,6 +10,8 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 
 import scala.collection.mutable.Set
 
+import scala.tools.nsc.io.File
+
 
 object SparkStatefulStreaming {
 
@@ -59,7 +61,10 @@ object SparkStatefulStreaming {
         updatedSet.foreach(sb.append(_))
         sb.append("----------------------------------------------------------------\n\n")
 
-        //TODO
+
+        File("src/main/resources/output/output.txt").appendAll(sb.toString())
+
+
       }
 
       state.update((lastAlertTime, updatedSet))
