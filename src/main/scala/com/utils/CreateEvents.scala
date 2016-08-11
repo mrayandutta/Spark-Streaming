@@ -1,38 +1,37 @@
 package com.utils
 
-import scala.tools.nsc.io.File;
+import scala.tools.nsc.io.File
 
 object CreateEvents {
 
+  val NumEventsPerRack = 300
+  val NumRacks = 250000
+  val OutputPath = "src/main/resources/input/events.txt"
+
   def main(args: Array[String]): Unit = {
 
-    val num_events_per_rack = 2
-    val num_racks = 10000
-    val outputPath = "src/main/resources/input/events.txt"
+    val sb = new StringBuilder()
 
-    val all_events = (0 until num_events_per_rack).foldLeft(new StringBuilder) { (sb, i) =>
-      if (i > 0) sb.append('\n')
-      generateEvent(num_racks, sb)
+    for(i <- 0 until NumEventsPerRack){
+      generateEvent(sb)
+      println("Event " + (i+1) + " for all racks generated")
     }
 
-    File(outputPath).writeAll(all_events.toString())
-    println("Events generated!")
+    println("[Generated] " + NumEventsPerRack + " events x " + NumRacks + " racks = " + NumEventsPerRack * NumRacks)
 
   }
 
 
-  def generateEvent(numRacks: Int, sb: StringBuilder): StringBuilder = {
+  def generateEvent(sb: StringBuilder): Unit = {
 
-    for (rack <- 0 until numRacks) {
+    for (rack <- 0 until NumRacks) {
 
-      val temperature = (Math.random() * 10) + 32   //to get high temperature once in a while
-      sb.append(rack + "|" + "%.2f".format(temperature))
-
-      if (rack != (numRacks - 1)) {
-        sb.append('\n')
-      }
-
+      val temperature = (Math.random() * 10) + 31  //to get high temperature once in a while
+      val event = rack + "|" + "%.2f".format(temperature)
+      sb.append(event + "\n")
     }
-    sb
+
+    File(OutputPath).appendAll(sb.toString())
+    sb.clear()
   }
 }

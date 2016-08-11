@@ -19,13 +19,15 @@ object SparkStatefulStreaming {
 
   def main(args: Array[String]): Unit = {
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("SparkStatefulStreaming")
+    val conf = new SparkConf().setMaster("local[*]").setAppName("SparkStatefulStreaming")
+    conf.set("spark.streaming.kafka.maxRatePerPartition", "250000")
+
     val ssc = new StreamingContext(conf, Seconds(1))
     ssc.checkpoint("/tmp/spark/checkpoint") // set checkpoint directory
 
 
     //Retrieving from Kafka
-    val kafkaParams: Map[String, String] = Map("metadata.broker.list" -> "localhost:9092")
+    val kafkaParams: Map[String, String] = Map("metadata.broker.list" -> "localhost:9092", "auto.offset.reset" -> "smallest")
     val topicsSet = scala.collection.immutable.Set("events")
 
     val kafkaStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
@@ -52,7 +54,7 @@ object SparkStatefulStreaming {
       var lastAlertTime = state.get()._1
 
       //launch alert if no alerts launched yet or if last launched alert was more than X seconds ago
-      if (updatedSet.size >= 2 && (lastAlertTime.isEmpty || !timeNoMoreThanXseconds(lastAlertTime.get, 20))) {
+      if (updatedSet.size >= 2 && (lastAlertTime.isEmpty || !timeNoMoreThanXseconds(lastAlertTime.get, 120))) {
 
         lastAlertTime = Some(System.currentTimeMillis())
 

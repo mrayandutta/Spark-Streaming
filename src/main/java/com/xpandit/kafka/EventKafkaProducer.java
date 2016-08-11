@@ -1,10 +1,13 @@
 package com.xpandit.kafka;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -15,9 +18,11 @@ import java.util.Properties;
  */
 public class EventKafkaProducer {
 
-    public static final String ZOOKEEPER = "localhost:2181";
-    public static final String BROKERS = "localhost:9092";
-    public static final String TOPIC = "events";
+    private static final String BROKERS = "localhost:9092";
+    private static final String TOPIC = "events";
+
+    private static final int INPUT_SIZE = 200000;           //number of events being produced to kafka each INTERVAL_TIME_MS
+    private static final int INTERVAL_TIME_MS = 1000;
 
 
     public static void main(String[] args){
@@ -29,29 +34,32 @@ public class EventKafkaProducer {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
 
         KafkaProducer<String,String> producer = new KafkaProducer<>(props);
+        LineIterator it = null;
 
         try {
 
-            List<String> eventLines = Files.readAllLines(Paths.get("src/main/resources/input/events.txt"));
+            it = FileUtils.lineIterator(new File("src/main/resources/input/events.txt"), "UTF-8");
 
             int currentEvent = 0;
-            int nextStop = 10000;
+            int nextStop = INPUT_SIZE;
 
-            while(currentEvent < eventLines.size()) {
+            while(it.hasNext()) {
 
                 while(currentEvent < nextStop) {
-                    String msg = System.currentTimeMillis() + "|" + eventLines.get(currentEvent);
+
+                    String line = it.nextLine();
+                    String msg = System.currentTimeMillis() + "|" + line;
 
                     ProducerRecord<String,String> producerRecord = new ProducerRecord<>(TOPIC, null/*key*/, msg);
                     producer.send(producerRecord);          //async send
                     currentEvent++;
                 }
 
-                System.out.println("Injected 10000 events to Kafka");
+                System.out.println("Injected " + INPUT_SIZE + " events to Kafka  [Total: " + currentEvent + "]");
 
-                nextStop += 10000;
+                nextStop += INPUT_SIZE;
 
-                Thread.sleep(5000);
+                //Thread.sleep(INTERVAL_TIME_MS);
             }
 
         } catch (Exception e) {
@@ -59,6 +67,7 @@ public class EventKafkaProducer {
         }
         finally {
             producer.close();
+            LineIterator.closeQuietly(it);
         }
     }
 }
