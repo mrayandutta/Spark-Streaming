@@ -1,6 +1,6 @@
 package com.xpandit.spark
 
-import java.sql.{Date, Timestamp}
+import java.sql.{Timestamp}
 
 import org.apache.log4j.Logger
 import org.apache.spark._
@@ -9,7 +9,6 @@ import _root_.kafka.serializer.StringDecoder
 import org.apache.spark.streaming.kafka.KafkaUtils
 
 import scala.collection.mutable.Set
-
 import scala.tools.nsc.io.File
 
 
@@ -38,7 +37,6 @@ object SparkStatefulStreaming {
       pair._2.highTemperature() && pair._2.isTimeRelevant()
     })
 
-
     //mapWithState function
     val updateState = (batchTime: Time, key: Int, value: Option[TemperatureStateEvent], state: State[(Option[Long], Set[TemperatureStateEvent])]) => {
 
@@ -63,9 +61,7 @@ object SparkStatefulStreaming {
         updatedSet.foreach(sb.append(_))
         sb.append("----------------------------------------------------------------\n\n")
 
-
         File("src/main/resources/output/output.txt").appendAll(sb.toString())
-
 
       }
 
@@ -85,21 +81,6 @@ object SparkStatefulStreaming {
   }
 
 
-  @SerialVersionUID(100L)
-  class TemperatureStateEvent(val rackId: Int, val time: Long, val temp: Double) extends Serializable {
-
-    val HighTemperature = 40.0
-    val RelevantTime = 120        //time window in seconds in which events will be considered from
-
-    def highTemperature() = temp > HighTemperature
-
-    //is event from no more than 2min ago
-    def isTimeRelevant() = timeNoMoreThanXseconds(time, RelevantTime)
-
-    override def toString(): String = "[ " + rackId + " , " + new Timestamp(time) + " , " + temp + " ]\n"
-
-  }
-
   def createEvent(strEvent: String): (Int, TemperatureStateEvent) = {
 
     val eventData = strEvent.split('|')
@@ -115,5 +96,4 @@ object SparkStatefulStreaming {
     val diff = (System.currentTimeMillis() - timestamp)
     diff <= maxTimeDiffSeconds * 1000
   }
-
 }
