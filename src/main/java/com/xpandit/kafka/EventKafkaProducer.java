@@ -21,19 +21,13 @@ public class EventKafkaProducer {
     private static final String BROKERS = "localhost:9092";
     private static final String TOPIC = "events";
 
-    private static final int INPUT_SIZE = 200000;           //number of events being produced to kafka each INTERVAL_TIME_MS
+    private static final int INPUT_SIZE = 250000;           //number of events being produced to kafka each INTERVAL_TIME_MS
     private static final int INTERVAL_TIME_MS = 1000;
 
 
     public static void main(String[] args){
 
-
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
-
-        KafkaProducer<String,String> producer = new KafkaProducer<>(props);
+        SimpleKafkaProducer kafkaProducer = new SimpleKafkaProducer(BROKERS);
         LineIterator it = null;
 
         try {
@@ -50,8 +44,7 @@ public class EventKafkaProducer {
                     String line = it.nextLine();
                     String msg = System.currentTimeMillis() + "|" + line;
 
-                    ProducerRecord<String,String> producerRecord = new ProducerRecord<>(TOPIC, null/*key*/, msg);
-                    producer.send(producerRecord);          //async send
+                    kafkaProducer.sendMessage(TOPIC, msg);
                     currentEvent++;
                 }
 
@@ -66,7 +59,7 @@ public class EventKafkaProducer {
             e.printStackTrace();
         }
         finally {
-            producer.close();
+            kafkaProducer.close();
             LineIterator.closeQuietly(it);
         }
     }

@@ -2,6 +2,8 @@ package com.xpandit.spark
 
 import java.sql.Timestamp
 
+import org.json.JSONObject
+
 /**
   * Created by xpandit on 8/16/16.
   */
@@ -30,6 +32,13 @@ class TemperatureStateEvent(val rackId: Int, val time: Long, val temp: Double) e
     result = prime * result + time.hashCode()
     result = prime * result + temp.hashCode()
     return result
+  }
+
+  def toJSON() : JSONObject = {
+    var json = new JSONObject()
+    json.put("rackId", rackId)
+    json.put("time", time)
+    json.put("temp", temp)
   }
 
   override def toString(): String = "[ " + rackId + " , " + new Timestamp(time) + " , " + temp + " ]\n"

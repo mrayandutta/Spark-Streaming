@@ -1,10 +1,10 @@
-package com.utils
+package com.xpandit.utils
 
 import scala.tools.nsc.io.File
 
 object CreateEvents {
 
-  val NumEventsPerRack = 300
+  val NumEventsPerRack = 10
   val NumRacks = 250000
   val OutputPath = "src/main/resources/input/events.txt"
 

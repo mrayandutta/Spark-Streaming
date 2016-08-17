@@ -1,15 +1,14 @@
 package com.xpandit.spark
 
-import java.sql.{Timestamp}
-
 import org.apache.log4j.Logger
 import org.apache.spark._
 import org.apache.spark.streaming._
 import _root_.kafka.serializer.StringDecoder
+import com.xpandit.kafka.SimpleKafkaProducer
 import org.apache.spark.streaming.kafka.KafkaUtils
+import org.json.{JSONArray, JSONObject}
 
 import scala.collection.mutable.Set
-import scala.tools.nsc.io.File
 
 
 object SparkStatefulStreaming {
@@ -56,13 +55,21 @@ object SparkStatefulStreaming {
 
         lastAlertTime = Some(System.currentTimeMillis())
 
-        var sb = new StringBuilder()
-        sb.append("\n---------- ALERT SITUATION AT " +  new Timestamp(lastAlertTime.get) + "-----------\n")
-        updatedSet.foreach(sb.append(_))
-        sb.append("----------------------------------------------------------------\n\n")
+        //alert in json to be published to kafka
+        var json = new JSONObject
+        json.put("time", lastAlertTime.get)
 
-        File("src/main/resources/output/output.txt").appendAll(sb.toString())
+        var eventsArray = new JSONArray
+        updatedSet.foreach( event => eventsArray.put(event.toJSON()) )
 
+        json.put("events", eventsArray)
+
+        //sending to kafka
+        val kafkaProducer = new SimpleKafkaProducer("localhost:9092")
+        kafkaProducer.sendMessage("alerts", json.toString())
+        kafkaProducer.close()
+
+        println(json.toString())
       }
 
       state.update((lastAlertTime, updatedSet))
