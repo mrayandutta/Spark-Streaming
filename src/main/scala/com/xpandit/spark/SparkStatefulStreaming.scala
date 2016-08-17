@@ -4,7 +4,7 @@ import org.apache.log4j.Logger
 import org.apache.spark._
 import org.apache.spark.streaming._
 import _root_.kafka.serializer.StringDecoder
-import com.xpandit.kafka.SimpleKafkaProducer
+import com.xpandit.utils.KafkaProducerHolder
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.json.{JSONArray, JSONObject}
 
@@ -65,11 +65,8 @@ object SparkStatefulStreaming {
         json.put("events", eventsArray)
 
         //sending to kafka
-        val kafkaProducer = new SimpleKafkaProducer("localhost:9092")
-        kafkaProducer.sendMessage("alerts", json.toString())
-        kafkaProducer.close()
+        KafkaProducerHolder.producer.sendMessage("alerts", json.toString())
 
-        println(json.toString())
       }
 
       state.update((lastAlertTime, updatedSet))
