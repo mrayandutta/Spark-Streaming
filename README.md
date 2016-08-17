@@ -1,4 +1,4 @@
-# SPARK CEP using Key/Value State Interface
+# SPARK CEP using Stateful Operator
 
 **C**omplex **E**vent **P**rocessing implementation that analyzes stream of events coming from various sources and launches alerts when specific matching pattern occurs.
 
