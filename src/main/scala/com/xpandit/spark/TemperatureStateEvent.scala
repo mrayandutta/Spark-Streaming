@@ -11,7 +11,7 @@ import org.json.JSONObject
 class TemperatureStateEvent(val rackId: Int, val time: Long, val temp: Double) extends Serializable {
 
   val HighTemperature = 40.0
-  val RelevantTime = 120        //time window in seconds in which events will be considered from
+  val RelevantTime = 3600        //time window in seconds in which events will be considered from
 
   def highTemperature() = temp > HighTemperature
   def isTimeRelevant() = (System.currentTimeMillis() - time) <= RelevantTime * 1000

@@ -2,16 +2,9 @@ package com.xpandit.kafka;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Properties;
+
 
 /**
  * Created by xpandit on 7/29/16.
@@ -21,7 +14,7 @@ public class EventKafkaProducer {
     private static final String BROKERS = "localhost:9092";
     private static final String TOPIC = "events";
 
-    private static final int INPUT_SIZE = 250000;           //number of events being produced to kafka each INTERVAL_TIME_MS
+    private static final int INPUT_SIZE = 1000000;           //number of events being produced to kafka each INTERVAL_TIME_MS
     private static final int INTERVAL_TIME_MS = 1000;
 
 

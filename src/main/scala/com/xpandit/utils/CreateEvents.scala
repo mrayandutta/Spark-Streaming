@@ -4,7 +4,7 @@ import scala.tools.nsc.io.File
 
 object CreateEvents {
 
-  val NumEventsPerRack = 10
+  val NumEventsPerRack = 300
   val NumRacks = 250000
   val OutputPath = "src/main/resources/input/events.txt"
 
